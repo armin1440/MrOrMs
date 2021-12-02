@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="styles.css" rel="stylesheet">
+    <title>Mr. or Ms.</title>
+</head>
+<body>
+<section class="mainWindow">
+    <div class="form">
+        <script>
+            //saves gender of the entered name
+            function saveName() {
+                let name = document.getElementById('Name').value;
+                let selectedValue = document.querySelector('input[name="gender"]:checked')?.value;
+                if(selectedValue != null)
+                    localStorage.setItem(name, selectedValue);
+                // console.log(selectedValue);
+            }
+
+            //clears saved data for a name
+            function clearSaved() {
+                let name = document.getElementById('Name').value;
+                localStorage.removeItem(name);
+                // console.log('cleared name');
+            }
+
+            //Gets values and send a request to the server. also checks for any saved data. shows a proper message
+            //if there is no data in the server or a there is a connection problem
+            async function submitForm() {
+                let name = document.getElementById('Name').value;
+                let resultColumn = '';
+                let parent = document.getElementById('pred');
+                try{
+                    let response = await fetch(`https://api.genderize.io/?name=` + name);
+                    if (response.status === 200) {
+                        // console.log('success');
+                        let responseObject = await response.json();
+                        if (responseObject.gender != null) {
+                            resultColumn = "<div>" + responseObject.gender + "</div><br/><div>" + 100 * responseObject.probability + "</div>";
+                        } else {
+                            resultColumn = "<br/>No Data Found<br/>";
+                        }
+                        let savedAnswer = localStorage.getItem(name);
+                        if (savedAnswer != null) {
+                            // console.log('found saved');
+                            resultColumn += "<br/><br/><div class='savedAnswer'><h1>Saved Answer</h1><br/>" + savedAnswer
+                                + "<br/><button type='button' value='Clear' onclick='clearSaved()'>Clear</button></div>";
+                        }
+                    } else {
+                        resultColumn = "A Problem Occurred";
+                    }
+                }
+                catch (e) {
+                    resultColumn = "There's a connection problem"
+                }
+                finally {
+                    parent.innerHTML = resultColumn;
+                }
+            }
+        </script>
+        <form class="formPart" method="get" action="https://api.genderize.io/"
+              onsubmit="submitForm(); return false;">
+            <h1>Mr. or Ms. ?</h1>
+            Name
+            <input class="nameField" id="Name" type="text" pattern="[A-Za-z ]+" maxlength="255"/>
+            <br/>
+            <br/>
+            <input type="radio" name="gender" value="Male" id="mg">Male
+            <br/>
+            <input type="radio" name="gender" value="Female" id="fg">Female
+            <br/>
+            <br/>
+            <button type="button" id="sub" onclick="submitForm()">Submit</button>
+            <br/>
+            <br/>
+            <button type="button" onclick="saveName()">Save</button>
+        </form>
+        <span style="width: 20px"></span>
+        <div class="formPart">
+            <h1>Prediction</h1>
+            <div id="pred"></div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
